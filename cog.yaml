@@ -1,0 +1,10 @@
+build:
+  gpu: true
+  python_version: "3.10"
+  python_packages:
+    - cog
+    - torch
+    - transformers
+    - stable-audio-tools
+
+predict: "predict.py:Predictor"
