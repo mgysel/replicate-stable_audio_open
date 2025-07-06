@@ -2,9 +2,6 @@ build:
   gpu: true
   python_version: "3.11"
   python_requirements: "requirements.txt"
-  env:
-    - HUGGING_FACE_HUB_TOKEN
 
 image: "r8.im/mgysel/stable-audio-open"
-
 predict: "predict.py:Predictor"

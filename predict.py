@@ -7,16 +7,24 @@ from huggingface_hub import login
 class Predictor:
     def setup(self):
         """Load the model into memory to make running multiple predictions efficient"""
-        # Try to authenticate with Hugging Face if token is available
+        # Get Hugging Face token from environment
         hf_token = os.getenv("HUGGING_FACE_HUB_TOKEN")
-        if hf_token:
+        
+        if not hf_token:
+            print("Warning: HUGGING_FACE_HUB_TOKEN not found in environment variables")
+            print("This may cause issues with accessing the gated model")
+        else:
             try:
+                # Log into Hugging Face
                 login(token=hf_token)
-                print("Successfully authenticated with Hugging Face")
+                print(f"Successfully authenticated with Hugging Face (token: {hf_token[:10]}...)")
             except Exception as e:
                 print(f"Warning: Could not authenticate with Hugging Face: {e}")
         
+        print("Loading stable-audio-open model...")
+        # The get_pretrained_model function should now work with the authenticated session
         self.model, self.cfg = get_pretrained_model("stabilityai/stable-audio-open-1.0")
+        print("Model loaded successfully!")
 
     def predict(self, description: str, duration: int = 8) -> Path:
         """Generate audio from text description"""
