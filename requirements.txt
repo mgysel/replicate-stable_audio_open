@@ -1,0 +1,4 @@
+cog>=0.15.9
+torch
+transformers
+stable-audio-tools 
