@@ -1,7 +1,9 @@
+# cog.yaml
+image: "r8.im/mgysel/stable-audio-open"
+
 build:
   gpu: true
   python_version: "3.11"
-  python_requirements: "requirements.txt"
+  python_requirements: "requirements.txt"   # add python-dotenv there
 
-image: "r8.im/mgysel/stable-audio-open"
 predict: "predict.py:Predictor"

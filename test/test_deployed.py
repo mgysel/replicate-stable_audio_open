@@ -35,14 +35,18 @@ def generate_audio(description: str, duration: int = 1):
         print(f"Using model: mgysel/stable-audio-open")
         print("🔄 Starting audio generation (this may take a few minutes for the first run)...")
         
-        # Make the API call with explicit version
-        output = replicate.run(
-            "mgysel/stable-audio-open:8250550277e7eba31931fd6acea39fbe5585fc55364a95b8548693427ecb3709",
+        # Use the new deployment API
+        deployment = replicate.deployments.get("mgysel/stable-audio-open")
+        prediction = deployment.predictions.create(
             input={
                 "description": description,
                 "duration": duration
             }
         )
+        
+        print("⏳ Waiting for prediction to complete...")
+        prediction.wait()
+        output = prediction.output
         
         print("✅ Audio generation completed!")
         

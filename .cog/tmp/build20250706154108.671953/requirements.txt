@@ -1,8 +1,6 @@
 cog>=0.15.9
 torch
-torchaudio
 transformers
 stable-audio-tools
 python-dotenv
 huggingface_hub
-einops 
