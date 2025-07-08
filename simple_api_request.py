@@ -37,7 +37,7 @@ def make_api_request(description: str, duration: int = 8):
         # Use the model version directly
         print("🚀 Sending request to Replicate model...")
         prediction = replicate.predictions.create(
-            version="mgysel/stable-audio-open:8465bfb2f7a77991f33e26db02083f0ca21799e8325a124901549c5effb1945d",
+            version="mgysel/stable-audio-open:d90a0c38317e1c4316732753a632dbc9757f4bcae7c16b0128e85e457014da71",
             input={
                 "description": description,
                 "duration": duration
@@ -94,7 +94,7 @@ def download_audio(url: str, filename: str = "generated_audio.wav"):
 
 if __name__ == "__main__":
     # Example usage
-    description = "Dirty rhytmic dnb bass riff in the style of noisia"
+    description = "Noisia style neuro dnb bass at 170bpm"
     duration = 10
     
     print("🎼 Stable Audio Open - API Request")

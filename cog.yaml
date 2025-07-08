@@ -1,5 +1,5 @@
 # cog.yaml
-image: "r8.im/mgysel/stable-audio-open"
+image: "r8.im/mgysel/stable-audio-open:d90a0c38317e1c4316732753a632dbc9757f4bcae7c16b0128e85e457014da71"
 
 build:
   gpu: true

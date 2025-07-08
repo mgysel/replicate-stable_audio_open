@@ -41,7 +41,7 @@ def generate_audio_with_timeout(description: str, duration: int = 1, timeout_sec
     
     try:
         print(f"Generating {duration}-second audio for: '{description}'")
-        print(f"Using model: mgysel/stable-audio-open:8465bfb2f7a77991f33e26db02083f0ca21799e8325a124901549c5effb1945d")
+        print(f"Using model: mgysel/stable-audio-open:d90a0c38317e1c4316732753a632dbc9757f4bcae7c16b0128e85e457014da71")
         print(f"⏱️  Timeout set to {timeout_seconds} seconds")
         print("🔄 Starting audio generation (this may take a few minutes for the first run)...")
         
@@ -52,7 +52,7 @@ def generate_audio_with_timeout(description: str, duration: int = 1, timeout_sec
         try:
             # Use the model version directly
             prediction = replicate.predictions.create(
-                version="mgysel/stable-audio-open:8465bfb2f7a77991f33e26db02083f0ca21799e8325a124901549c5effb1945d",
+                version="mgysel/stable-audio-open:d90a0c38317e1c4316732753a632dbc9757f4bcae7c16b0128e85e457014da71",
                 input={
                     "description": description,
                     "duration": duration

@@ -21,7 +21,7 @@ def test_api_connection():
         print("Testing API connection...")
         
         # Try to get model info
-        model_info = replicate.models.get("mgysel/stable-audio-open:8465bfb2f7a77991f33e26db02083f0ca21799e8325a124901549c5effb1945d")
+        model_info = replicate.models.get("mgysel/stable-audio-open:d90a0c38317e1c4316732753a632dbc9757f4bcae7c16b0128e85e457014da71")
         print(f"✅ Model found: {model_info}")
         
         # Model info shows the latest version is available
