@@ -50,13 +50,16 @@ class Predictor(BasePredictor):
             "seconds_total": duration
         }]
 
+        # Calculate sample size based on requested duration
+        target_sample_size = int(duration * self.sample_rate)
+        
         # Generate stereo audio
         output = generate_diffusion_cond(
             self.model,
             steps=100,
             cfg_scale=7,
             conditioning=conditioning,
-            sample_size=self.sample_size,
+            sample_size=target_sample_size,
             sigma_min=0.3,
             sigma_max=500,
             sampler_type="dpmpp-3m-sde",

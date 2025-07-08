@@ -32,12 +32,12 @@ def generate_audio(description: str, duration: int = 1):
     
     try:
         print(f"Generating {duration}-second audio for: '{description}'")
-        print(f"Using model: mgysel/stable-audio-open")
+        print(f"Using model: mgysel/stable-audio-open:8465bfb2f7a77991f33e26db02083f0ca21799e8325a124901549c5effb1945d")
         print("🔄 Starting audio generation (this may take a few minutes for the first run)...")
         
-        # Use the new deployment API
-        deployment = replicate.deployments.get("mgysel/stable-audio-open")
-        prediction = deployment.predictions.create(
+        # Use the model version directly
+        prediction = replicate.predictions.create(
+            version="mgysel/stable-audio-open:8465bfb2f7a77991f33e26db02083f0ca21799e8325a124901549c5effb1945d",
             input={
                 "description": description,
                 "duration": duration

@@ -41,7 +41,7 @@ def generate_audio_with_timeout(description: str, duration: int = 1, timeout_sec
     
     try:
         print(f"Generating {duration}-second audio for: '{description}'")
-        print(f"Using model: mgysel/stable-audio-open")
+        print(f"Using model: mgysel/stable-audio-open:8465bfb2f7a77991f33e26db02083f0ca21799e8325a124901549c5effb1945d")
         print(f"⏱️  Timeout set to {timeout_seconds} seconds")
         print("🔄 Starting audio generation (this may take a few minutes for the first run)...")
         
@@ -50,9 +50,9 @@ def generate_audio_with_timeout(description: str, duration: int = 1, timeout_sec
         signal.alarm(timeout_seconds)
         
         try:
-            # Use the new deployment API
-            deployment = replicate.deployments.get("mgysel/stable-audio-open")
-            prediction = deployment.predictions.create(
+            # Use the model version directly
+            prediction = replicate.predictions.create(
+                version="mgysel/stable-audio-open:8465bfb2f7a77991f33e26db02083f0ca21799e8325a124901549c5effb1945d",
                 input={
                     "description": description,
                     "duration": duration
@@ -111,7 +111,7 @@ def generate_audio_with_timeout(description: str, duration: int = 1, timeout_sec
 if __name__ == "__main__":
     # Example usage with 30-second timeout
     description = "heavenly flowing pad"
-    audio_file = generate_audio_with_timeout(description, duration=1, timeout_seconds=30)
+    audio_file = generate_audio_with_timeout(description, duration=1)
     
     if audio_file:
         print(f"\n✅ Success! Audio file created at: {audio_file}")

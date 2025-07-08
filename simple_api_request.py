@@ -34,10 +34,10 @@ def make_api_request(description: str, duration: int = 8):
     print(f"🎵 Generating {duration}s audio for: '{description}'")
     
     try:
-        # Use the deployment API since you have a deployment URL
-        print("🚀 Sending request to Replicate deployment...")
-        deployment = replicate.deployments.get("mgysel/stable-audio-open")
-        prediction = deployment.predictions.create(
+        # Use the model version directly
+        print("🚀 Sending request to Replicate model...")
+        prediction = replicate.predictions.create(
+            version="mgysel/stable-audio-open:8465bfb2f7a77991f33e26db02083f0ca21799e8325a124901549c5effb1945d",
             input={
                 "description": description,
                 "duration": duration
@@ -94,8 +94,8 @@ def download_audio(url: str, filename: str = "generated_audio.wav"):
 
 if __name__ == "__main__":
     # Example usage
-    description = "neuro bass"
-    duration = 2
+    description = "Dirty rhytmic dnb bass riff in the style of noisia"
+    duration = 10
     
     print("🎼 Stable Audio Open - API Request")
     print("=" * 40)
@@ -105,7 +105,7 @@ if __name__ == "__main__":
     
     if audio_url:
         # Download the audio
-        filename = f"neuro_bass_{duration}s.wav"
+        filename = f"{description}_{duration}s.wav"
         local_file = download_audio(audio_url, filename)
         
         if local_file:

@@ -15,7 +15,7 @@ def generate_audio_with_debug(description: str, duration: int = 1):
         return None
     
     print("=== API CALL DEBUG INFO ===")
-    print(f"Model: mgysel/stable-audio-open")
+    print(f"Model: mgysel/stable-audio-open:8465bfb2f7a77991f33e26db02083f0ca21799e8325a124901549c5effb1945d")
     print(f"Description: {description}")
     print(f"Duration: {duration} seconds")
     print(f"API Token: {api_token[:10]}...{api_token[-4:] if len(api_token) > 14 else '***'}")
@@ -31,7 +31,7 @@ def generate_audio_with_debug(description: str, duration: int = 1):
         
         # Make the API call
         output = replicate.run(
-            "mgysel/stable-audio-open",
+            "mgysel/stable-audio-open:8465bfb2f7a77991f33e26db02083f0ca21799e8325a124901549c5effb1945d",
             input={
                 "description": description,
                 "duration": duration
