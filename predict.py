@@ -37,8 +37,7 @@ class Predictor(BasePredictor):
 
     def predict(
         self,
-        description: str = Input(
-            description="Text prompt for the audio"),
+        description: str = Input(description="Text prompt for the audio"),
         duration: int = Input(
             default=8, ge=1, le=120,
             description="Length of the generated audio in seconds"),
@@ -46,14 +45,14 @@ class Predictor(BasePredictor):
         # Set up text and timing conditioning
         conditioning = [{
             "prompt": description,
-            "seconds_start": 0, 
+            "seconds_start": 0,
             "seconds_total": duration
         }]
 
         # Calculate sample size based on requested duration
         target_sample_size = int(duration * self.sample_rate)
-        
-        # Generate stereo audio
+
+        # Generate audio
         output = generate_diffusion_cond(
             self.model,
             steps=100,
@@ -66,12 +65,22 @@ class Predictor(BasePredictor):
             device=self.device
         )
 
-        # Rearrange audio batch to a single sequence
-        output = rearrange(output, "b d n -> d (b n)")
+        # ---- Match tensor_to_wav_bytes behavior ----
+        # 1) Shape handling (NO rearrange)
+        if output.ndim == 3:
+            output = output[0]              # take first batch -> (channels, samples)
+        elif output.ndim == 1:
+            output = output.unsqueeze(0)    # add channel dim -> (1, samples)
 
-        # Peak normalize, clip, convert to int16, and save to file
-        output = output.to(torch.float32).div(torch.max(torch.abs(output))).clamp(-1, 1).mul(32767).to(torch.int16).cpu()
-        
+        # 2) Peak-normalize & clamp in float32 (no zero-guard, to match exactly)
+        output = (
+            output.to(torch.float32)
+                .div(torch.max(torch.abs(output)))
+                .clamp(-1.0, 1.0)
+                .cpu()
+        )
+
+        # 3) Save as 32-bit float WAV
         out = Path("output.wav")
-        torchaudio.save(str(out), output, self.sample_rate)
+        torchaudio.save(str(out), output, sample_rate=self.sample_rate, format="wav")
         return out
