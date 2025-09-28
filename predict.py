@@ -89,7 +89,15 @@ class Predictor(BasePredictor):
         sigma_min = float(sigma_min or 0.3)
         sigma_max = float(sigma_max or 500.0)
         sampler_type = (sampler_type or "dpmpp-3m-sde")
-        seed = 0 if seed is None else int(seed)
+        
+        # Handle seed - coerce None to 0 (which means random)
+        try:
+            seed_int = int(seed) if seed is not None else 0
+        except (TypeError, ValueError):
+            seed_int = 0
+
+        # use seed_int from here on (0 means random to the library)
+        print({"resolved_seed": seed_int})  # shows up in Replicate logs
 
         # 1) Generate (keep model window; control time via conditioning)
         with torch.inference_mode():
@@ -107,7 +115,7 @@ class Predictor(BasePredictor):
                 sigma_max=sigma_max,
                 sampler_type=sampler_type,
                 device=self.device,
-                seed=None if seed == 0 else seed,  # None=random; same logic on both
+                seed=seed_int,   # <-- never None
             )
 
         # 2) Sanitize & shape
