@@ -62,9 +62,18 @@ class Predictor(BasePredictor):
         self.model, self.model_config = get_pretrained_model(
             "stabilityai/stable-audio-open-1.0"
         )
-        self.sample_rate: int = int(self.model_config["sample_rate"])
-        # IMPORTANT: sample_size is the model's latent/audio window size (in samples)
-        self.sample_size: int = int(self.model_config["sample_size"])
+        
+        # Safe model config handling with fallbacks
+        sr = self.model_config.get("sample_rate")
+        ss = self.model_config.get("sample_size")
+        if sr is None or ss is None:
+            # fallback to model attrs if available
+            sr = sr if sr is not None else getattr(self.model, "sample_rate", None)
+            ss = ss if ss is not None else getattr(self.model, "sample_size", None)
+        if sr is None or ss is None:
+            raise RuntimeError("Model config missing sample_rate/sample_size.")
+        self.sample_rate = int(sr)
+        self.sample_size = int(ss)
 
         # Device
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -104,6 +113,15 @@ class Predictor(BasePredictor):
           - Keep model_config['sample_size'] fixed.
           - Control timing via 'conditioning' seconds and then trim.
         """
+
+        # Coerce Nones coming from Replicate UI/API
+        duration = int(duration or 8)
+        steps = int(steps or 150)
+        cfg_scale = float(cfg_scale or 7.0)
+        sigma_min = float(sigma_min or 0.3)
+        sigma_max = float(sigma_max or 500.0)
+        sampler_type = (sampler_type or "dpmpp-3m-sde")
+        seed = 0 if seed is None else int(seed)
 
         # Build conditioning over the requested duration.
         conditioning = [{
