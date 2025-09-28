@@ -14,38 +14,6 @@ from stable_audio_tools import get_pretrained_model
 from stable_audio_tools.inference.generation import generate_diffusion_cond
 
 
-def _safe_peak_normalize(x: torch.Tensor) -> torch.Tensor:
-    """Peak-normalize to [-1, 1] with zero-guard in float32 on CPU."""
-    x = x.to(torch.float32)
-    peak = torch.max(torch.abs(x))
-    if torch.isfinite(peak) and peak > 0:
-        x = x / peak
-    return x.clamp(-1.0, 1.0).cpu()
-
-
-def _to_channels_first(audio: torch.Tensor) -> torch.Tensor:
-    """
-    Ensure tensor is (channels, samples) for torchaudio.save.
-    Accepts shapes:
-      (B, C, T) -> take first batch -> (C, T)
-      (C, T)    -> as is
-      (T,)      -> mono -> (1, T)
-    """
-    if audio.ndim == 3:
-        # (batch, channels, samples)
-        audio = audio[0]
-    elif audio.ndim == 1:
-        audio = audio.unsqueeze(0)
-    # now (C, T)
-    return audio
-
-
-def _trim_to_seconds(audio_ct: torch.Tensor, sr: int, seconds: float) -> torch.Tensor:
-    """Trim channels-first audio to exact number of samples for given seconds."""
-    max_samples = int(round(seconds * sr))
-    return audio_ct[..., :max_samples]
-
-
 class Predictor(BasePredictor):
     def setup(self):
         load_dotenv(override=False)
@@ -123,51 +91,58 @@ class Predictor(BasePredictor):
         sampler_type = (sampler_type or "dpmpp-3m-sde")
         seed = 0 if seed is None else int(seed)
 
-        # Build conditioning over the requested duration.
-        conditioning = [{
-            "prompt": description,
-            "seconds_start": 0,
-            "seconds_total": float(duration),
-        }]
-
-        # NOTE: Do NOT override sample_size with duration-derived value.
-        # The generator returns up to `self.sample_size` samples; we trim afterward.
-        gen_kwargs = dict(
-            model=self.model,
-            steps=int(steps),
-            cfg_scale=float(cfg_scale),
-            conditioning=conditioning,
-            sample_size=self.sample_size,      # CRITICAL: use model window size
-            sigma_min=float(sigma_min),
-            sigma_max=float(sigma_max),
-            sampler_type=sampler_type,
-            device=self.device,
-            seed=None if seed == 0 else int(seed),
-        )
-
+        # 1) Generate (keep model window; control time via conditioning)
         with torch.inference_mode():
-            audio = generate_diffusion_cond(**gen_kwargs)
-            # audio expected shape: (B, C, T) or (C, T)
+            audio = generate_diffusion_cond(
+                model=self.model,
+                steps=steps,
+                cfg_scale=cfg_scale,
+                conditioning=[{
+                    "prompt": description,
+                    "seconds_start": 0,
+                    "seconds_total": float(duration),
+                }],
+                sample_size=self.sample_size,      # <- fixed window
+                sigma_min=sigma_min,
+                sigma_max=sigma_max,
+                sampler_type=sampler_type,
+                device=self.device,
+                seed=None if seed == 0 else seed,  # None=random; same logic on both
+            )
 
-        # Ensure (C, T)
-        audio_ct = _to_channels_first(audio)
+        # 2) Sanitize & shape
+        audio = torch.nan_to_num(audio, nan=0.0, posinf=0.0, neginf=0.0)
+        # (B,C,T)->(C,T); (T,)->(1,T)
+        if audio.ndim == 3:
+            audio = audio[0]
+        elif audio.ndim == 1:
+            audio = audio.unsqueeze(0)
 
-        # Optional peak normalize with guard
+        # 3) Peak normalize with guard (do this or do nothing—just be consistent)
         if normalize:
-            audio_ct = _safe_peak_normalize(audio_ct)
-
-        # Trim to requested duration (never pad; users usually prefer exact or shorter)
-        audio_ct = _trim_to_seconds(audio_ct, self.sample_rate, float(duration))
-
-        # Choose dtype / subtype
-        out = Path("/tmp/output.wav")  # Replicate/Cog safe path
-
-        if float32_wav:
-            # torchaudio.save will write PCM_F32 when given float32 tensor
-            torchaudio.save(str(out), audio_ct, sample_rate=self.sample_rate, format="wav")
+            peak = torch.max(torch.abs(audio)).to(torch.float32)
+            if torch.isfinite(peak) and peak > 0:
+                audio = (audio.to(torch.float32) / peak).clamp(-1.0, 1.0)
+            else:
+                audio = audio.to(torch.float32).clamp(-1.0, 1.0)
         else:
-            # 16-bit PCM path
-            int16 = (audio_ct * 32767.0).round().clamp(-32768, 32767).to(torch.int16)
+            audio = audio.to(torch.float32)
+
+        # 4) Trim (use the same rounding everywhere; I suggest floor)
+        max_samples = int(self.sample_rate * float(duration))
+        audio = audio[..., :max_samples]
+
+        # 5) CPU + contiguous
+        audio = audio.contiguous().cpu()
+
+        # 6) Save with the same encoding on both sides (choose ONE)
+        out = Path("/tmp/output.wav")
+        if float32_wav:
+            # Float32 (recommended)
+            torchaudio.save(str(out), audio, sample_rate=self.sample_rate, format="wav")
+        else:
+            # If you prefer 16-bit, do this in BOTH places instead:
+            int16 = (audio * 32767.0).round().clamp(-32768, 32767).to(torch.int16)
             torchaudio.save(str(out), int16, sample_rate=self.sample_rate, format="wav")
 
         return out
