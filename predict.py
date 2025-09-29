@@ -136,6 +136,25 @@ class Predictor(BasePredictor):
 
         print({"resolved_seed": seed_int, "requested_seconds": duration})
 
+        # Debug: Print all model input parameters
+        print("=== MODEL INPUT PARAMETERS ===")
+        print({
+            "description": description,
+            "duration": duration,
+            "seed": seed_int,
+            "steps": steps,
+            "cfg_scale": cfg_scale,
+            "sigma_min": sigma_min,
+            "sigma_max": sigma_max,
+            "sampler_type": sampler_type,
+            "normalize": normalize,
+            "float32_wav": float32_wav,
+            "model_sample_size": self.sample_size,
+            "model_sample_rate": self.sample_rate,
+            "device": self.device,
+        })
+        print("==============================")
+
         # 1) Generate (keep model window; control time via conditioning)
         with torch.inference_mode():
             audio = generate_diffusion_cond(
