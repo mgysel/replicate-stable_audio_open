@@ -189,25 +189,26 @@ class Predictor(BasePredictor):
             "encoding": "PCM_F32LE" if float32_wav else "PCM_S16LE",
         })
 
-        # 6) Save WAV (explicit encoding)
+        # 6) Save WAV (backend-agnostic encoding names)
         out = Path("/tmp/output.wav")
         if float32_wav:
-            # Lossless float; some previewers may be picky
+            # 32-bit float WAV
             torchaudio.save(
                 str(out),
                 audio,
                 sample_rate=self.sample_rate,
                 format="wav",
-                encoding="PCM_F32LE",
+                encoding="PCM_F32",
             )
         else:
-            # Safest cross-player choice
+            # 16-bit PCM WAV
             torchaudio.save(
                 str(out),
                 audio,
                 sample_rate=self.sample_rate,
                 format="wav",
-                encoding="PCM_S16LE",
+                encoding="PCM_S",
+                bits_per_sample=16,
             )
 
         return out
